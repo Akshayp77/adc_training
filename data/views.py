@@ -1,36 +1,34 @@
-from django import http
 from django.http.response import HttpResponse
-from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from django.contrib.auth.models import auth
-from .data_helper_func import scrap,token
+from rest_framework.authentication import  BasicAuthentication
+from .data_helper_func.token import remove_stopwords,steming_data
+from .data_helper_func.scrap import scrap_description,scrap_metadata
 
 
-
-class CsrfExemptSessionAuthentication(SessionAuthentication):
-    def enforce_csrf(self, request):
-        return 
 
 class scrap(APIView):
-    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
-
+    '''this API is used to scrap meta information using scrap function present in data_helper_fun directory
+       and store scrapped data in database.
+    '''
+    authentication_classes = [BasicAuthentication]
     def post(self,request):
-        username=request.POST['username']
-        password=request.POST['password']
-        user=auth.authenticate(username=username,password=password)
-        if user is not None:
-            scrap.scrap_metadata()
-            return HttpResponse("DATA stored in database Successfully")
-        else:
-            return HttpResponse("Username or Password is incorrect")
+        output=scrap_metadata()
+        if output==0:
+            return HttpResponse("Database is not connected")
+        return HttpResponse("DATA stored in database Successfully")
 
-class discription(APIView):
-    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+class description(APIView):
+    '''this API is used to scrap description of meta information using description function present in data_helper_fun 
+        directory and store scrapped data in database.
+    '''
+    authentication_classes =[BasicAuthentication]
     def post(self,request):
-        scrap.scrap_description()
-        token.remove_stopwords()
-        token.steming_data()
+        output1=scrap_description()
+        output2=remove_stopwords()
+        output3=steming_data()
+        if output1*output2*output3==0:
+            return HttpResponse("database is not connected")
         return HttpResponse("Data converted into tokens(removed stopwords,steming) and stored in database Successfully")
 
 
